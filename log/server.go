@@ -31,11 +31,12 @@ func (fl fileLog) Write(data []byte) (int, error) {
 }
 
 // 初始化日志系统
-func Run(destination string) {
+func Run(destination string) *gin.Engine {
 	// 初始化传入：io.Writer 类型的值，日志的前缀，日志的标记（长日期｜长时间）
 	log = stlog.New(fileLog(destination), "go ", stlog.LstdFlags)
 	// 初始化服务
 	server = gin.Default()
+	return server
 }
 
 // 使用 Gin 框架重写请求处理函数
