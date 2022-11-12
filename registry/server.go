@@ -8,7 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const ServerPort = ":3000"
+const (
+	ServerPort = ":3000"
+	ServerURL  = "localhost" + ServerPort + "/registry"
+)
 
 // 服务注册列表
 type registry struct {
