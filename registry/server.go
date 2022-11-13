@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -19,7 +20,7 @@ const (
 // 服务注册列表
 type registry struct {
 	registrations []Registration
-	regMutex      *sync.Mutex
+	regMutex      *sync.RWMutex
 }
 
 // 将注册好的服务添加到注册列表中
@@ -28,7 +29,53 @@ func (r *registry) add(reg Registration) error {
 	r.registrations = append(r.registrations, reg)
 	r.regMutex.Unlock()
 
+	err := r.sendRequiredServices(reg)
+	if nil != err {
+		log.Printf("failed to send required services to service at url %s: %s", reg.UpdateURL, err.Error())
+	}
+
 	fmt.Printf("Service at URL %s registed\n", reg.ServiceURL)
+
+	return nil
+}
+
+// 将服务的依赖发送给它
+func (r registry) sendRequiredServices(reg Registration) error {
+	r.regMutex.RLock()
+	defer r.regMutex.Unlock()
+
+	var p patch
+	// 循环已经注册的服务，如果找到当前服务所依赖的服务，就添加到 patch 里
+	for _, r := range r.registrations {
+		for _, req := range reg.RequiredServices {
+			if r.ServiceName == req {
+				p.Added = append(p.Added, patchEntry{
+					Name: r.ServiceName,
+					URL:  r.ServiceURL,
+				})
+			}
+		}
+	}
+
+	err := r.sendPatch(p, reg.UpdateURL) // 将找到的依赖的信息发送给服务
+	if nil != err {
+		return err
+	}
+	return nil
+}
+
+// 发送依赖信息
+func (r registry) sendPatch(p patch, url string) error {
+	data, err := json.Marshal(p)
+	if nil != err {
+		return err
+	}
+
+	// 以 post 请求的形式发送依赖信息
+	_, err = http.Post(url, "application/json", bytes.NewBuffer(data))
+	if nil != err {
+		return err
+	}
 
 	return nil
 }
@@ -51,7 +98,7 @@ func (r *registry) remove(url string) error {
 // 建立一个包级的服务注册列表
 var r = registry{
 	registrations: make([]Registration, 0),
-	regMutex:      new(sync.Mutex),
+	regMutex:      new(sync.RWMutex),
 }
 
 // 服务注册模块的 WEB 服务
