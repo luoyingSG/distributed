@@ -42,7 +42,7 @@ func (r *registry) add(reg Registration) error {
 // 将服务的依赖发送给它
 func (r registry) sendRequiredServices(reg Registration) error {
 	r.regMutex.RLock()
-	defer r.regMutex.Unlock()
+	defer r.regMutex.RUnlock()
 
 	var p patch
 	// 循环已经注册的服务，如果找到当前服务所依赖的服务，就添加到 patch 里
@@ -83,6 +83,8 @@ func (r registry) sendPatch(p patch, url string) error {
 // 将服务移除注册列表
 func (r *registry) remove(url string) error {
 	r.regMutex.Lock()
+	defer r.regMutex.Unlock()
+
 	for i, registration := range r.registrations {
 		if registration.ServiceURL == url {
 			r.registrations = append(r.registrations[:i], r.registrations[i+1:]...)
@@ -90,7 +92,6 @@ func (r *registry) remove(url string) error {
 			return nil
 		}
 	}
-	r.regMutex.Unlock()
 
 	return fmt.Errorf("failed to find registed service with url %s", url)
 }

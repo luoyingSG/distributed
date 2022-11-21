@@ -34,7 +34,7 @@ func Start(host, port string, reg registry.Registration, server *gin.Engine,
 	// 在启动服务后，将该服务注册进 registry
 	err := registry.RegistryEntrance(reg)
 	if nil != err {
-		return nil
+		return err
 	}
 	defer registry.RegistryExit(reg.ServiceURL)
 

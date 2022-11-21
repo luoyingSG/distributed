@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"log"
+	stdlog "log"
 
+	"github.com/luoying_gh/distributed/log"
 	"github.com/luoying_gh/distributed/registry"
 	"github.com/luoying_gh/distributed/service"
 	"github.com/luoying_gh/distributed/user"
@@ -13,12 +14,22 @@ func main() {
 	server := user.Run()
 	host, port := "localhost", "5678"
 	reg := registry.Registration{
-		ServiceName: "UserService",
-		ServiceURL:  fmt.Sprintf("http://%s:%s", host, port),
+		ServiceName:      "UserService",
+		ServiceURL:       fmt.Sprintf("http://%s:%s", host, port),
+		RequiredServices: []registry.ServiceName{registry.LogService},
+		UpdateURL:        fmt.Sprintf("http://%s:%s/services", host, port),
 	}
 
 	err := service.Start(host, port, reg, server, user.UserHandlers)
 	if nil != err {
-		log.Fatalln(err)
+		stdlog.Fatalln(err)
+	}
+
+	// 服务启动之后，开始使用 LogService
+	if logProvider, err := registry.GetProvider(registry.LogService); nil != err {
+		stdlog.Printf("failed to find required log service: %s", err.Error())
+	} else {
+		fmt.Printf("Log service found at %s", logProvider)
+		log.SetClientLogger(logProvider, registry.LogService)
 	}
 }
