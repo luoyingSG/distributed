@@ -34,6 +34,15 @@ func (r *registry) add(reg Registration) error {
 		log.Printf("failed to send required services to service at url %s: %s", reg.UpdateURL, err.Error())
 	}
 
+	r.notify(patch{
+		Added: []patchEntry{
+			{
+				Name: reg.ServiceName,
+				URL:  reg.ServiceURL,
+			},
+		},
+	})
+
 	fmt.Printf("Service at URL %s registed\n", reg.ServiceURL)
 
 	return nil
@@ -137,4 +146,45 @@ func init() {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
 		}
 	})
+}
+
+// 将依赖的变化通知到需要该依赖的服务
+func (r *registry) notify(fullPatch patch) {
+	r.regMutex.RLock()
+	defer r.regMutex.RUnlock()
+
+	// 遍历已经注册的服务
+	for _, reg := range r.registrations {
+		go func(reg Registration) { // 将已经注册的服务传入到 go routine 里
+			// 在 go routine 里，针对传入的服务，看看它的依赖是否需要更新
+			for _, reqService := range reg.RequiredServices {
+				p := patch{Added: []patchEntry{}, Removed: []patchEntry{}}
+				sendUpdate := false // 是否需要更新
+
+				// 看看是否有新的依赖可用
+				for _, added := range fullPatch.Added {
+					if added.Name == reqService {
+						p.Added = append(p.Added, added)
+						sendUpdate = true
+					}
+				}
+
+				// 看看是否有依赖被删除了
+				for _, removed := range fullPatch.Removed {
+					if removed.Name == reqService {
+						p.Removed = append(p.Removed, removed)
+						sendUpdate = true
+					}
+				}
+
+				if sendUpdate {
+					err := r.sendPatch(p, reg.UpdateURL)
+					if err != nil {
+						log.Fatal(err)
+						return
+					}
+				}
+			}
+		}(reg)
+	}
 }
