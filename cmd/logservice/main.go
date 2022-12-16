@@ -4,9 +4,9 @@ import (
 	"fmt"
 	stlog "log"
 
-	"github.com/luoying_gh/distributed/log"
-	"github.com/luoying_gh/distributed/registry"
-	"github.com/luoying_gh/distributed/service"
+	"github.com/mothbuzzing/distributed/log"
+	"github.com/mothbuzzing/distributed/registry"
+	"github.com/mothbuzzing/distributed/service"
 )
 
 func main() {

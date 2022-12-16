@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/luoying_gh/distributed/registry"
+	"github.com/mothbuzzing/distributed/registry"
 )
 
 // 使用 Gin 框架重写的服务启动函数

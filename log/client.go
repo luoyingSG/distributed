@@ -6,7 +6,7 @@ import (
 	stdlog "log"
 	"net/http"
 
-	"github.com/luoying_gh/distributed/registry"
+	"github.com/mothbuzzing/distributed/registry"
 )
 
 func SetClientLogger(serviceURL string, clientService registry.ServiceName) {

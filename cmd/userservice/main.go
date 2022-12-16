@@ -4,10 +4,10 @@ import (
 	"fmt"
 	stdlog "log"
 
-	"github.com/luoying_gh/distributed/log"
-	"github.com/luoying_gh/distributed/registry"
-	"github.com/luoying_gh/distributed/service"
-	"github.com/luoying_gh/distributed/user"
+	"github.com/mothbuzzing/distributed/log"
+	"github.com/mothbuzzing/distributed/registry"
+	"github.com/mothbuzzing/distributed/service"
+	"github.com/mothbuzzing/distributed/user"
 )
 
 func main() {
